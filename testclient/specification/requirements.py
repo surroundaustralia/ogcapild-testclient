@@ -5,7 +5,7 @@ REQUIREMENTS = {
             "id": "/req/core/root-op",
             "parts": {
                 "A": "The server SHALL support the HTTP GET operation at the path /."
-            }
+            },
         },
         {
             "name": "Requirement 2",
@@ -19,7 +19,7 @@ REQUIREMENTS = {
     /conformance (relation type 'conformance')
     
     /collections (relation type 'data')"""
-            }
+            },
         },
         {
             "name": "Requirement 3",
