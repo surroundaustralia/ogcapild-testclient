@@ -1,4 +1,5 @@
-import requests
+import sys
+from utils import *
 
 
 def valid_link_object(link: dict):
@@ -37,12 +38,12 @@ def valid_link_object(link: dict):
             
 def req_01_test(api_base_url: str):
     messages = []
-    r = requests.get(
-        api_base_url
-    )
-    if not r.ok:
+    result = True
+
+    if not is_url_ok(api_base_url):
         messages.append("API base URI, {}, does not respond to a GET request".format(api_base_url))
-    return r.ok, None
+        result = False
+    return result, messages
 
 
 def req_02_test(api_base_url: str):
@@ -50,30 +51,23 @@ def req_02_test(api_base_url: str):
     B = True
     messages = []
 
-    r = requests.get(
-        api_base_url,
-        headers={"Accept": "application/json"}
-    )
-    try:
-        c = r.json()
-    except:
-        c = None
+    r = get_url_content(api_base_url, SupportedMediaType.JSON)
 
-    if c is not None and r.status_code != 200:
+    if r[1] is not None and r[0] != 200:
         A = False
 
     try:
-        title = c.get("title")
+        title = r[1].get("title")
         if title is not None:
             if type(title) != str:
                 B = False
                 messages.append("The title property, since present, is not of type string, as required by the landingPage.yaml schema")
-        description = c.get("description")
+        description = r[1].get("description")
         if description is not None:
             if type(description) != str:
                 B = False
                 messages.append("The description property, since present, is not of type string, as required by the landingPage.yaml schema")
-        links = c.get("links")
+        links = r[1].get("links")
         if links is None:
             B = False
             messages.append("The links property must be present, as required by the landingPage.yaml schema")
@@ -125,18 +119,12 @@ def req_02_test(api_base_url: str):
 def req_03_test(api_base_url: str):
     result = True
     messages = []
-    r = requests.get(
-        api_base_url,
-        headers={"Accept": "application/json"}
-    )
-    contents = r.json()
+
+    r = get_url_content(api_base_url, SupportedMediaType.JSON)
+    contents = r[1]
     links = contents.get("links")
     for link in links:
-        r = requests.get(
-            link["href"],
-            headers={"Accept": "application/json"}
-        )
-        if not r.ok:
+        if not is_url_ok(link["href"], SupportedMediaType.JSON):
             result = False
             messages.append("Link {} did not return a valid response to a GET request".format(link["href"]))
 
@@ -148,13 +136,9 @@ def req_04_test(api_base_url):
     messages = []
     # get the service-desc URL
     # get the service-doc URL
-    r = requests.get(
-        api_base_url,
-        headers={"Accept": "application/json"}
-    )
-    c = r.json()
+    r = get_url_content(api_base_url, SupportedMediaType.JSON)
 
-    for link in c["links"]:
+    for link in r[1]["links"]:
         if link["rel"] == "service-desc":
             service_desc_uri = link["href"]
             service_desc_type = link["type"]
@@ -163,11 +147,7 @@ def req_04_test(api_base_url):
             service_doc_type = link["type"]
 
     # call each
-    r = requests.get(
-        service_desc_uri,
-        headers={"Accept": service_desc_type}
-    )
-    if not r.ok:
+    if not is_url_ok(service_desc_uri, service_desc_type):
         result = False
         messages.append("service-desc link did not return a value")
     else:
@@ -175,11 +155,7 @@ def req_04_test(api_base_url):
             result = False
             messages.append("service-desc link did not return the correct Content-Type")
 
-    r = requests.get(
-        service_doc_uri,
-        headers={"Accept": service_doc_type}
-    )
-    if not r.ok:
+    if not is_url_ok(service_doc_uri, service_doc_type):
         result = False
         messages.append("service-doc link did not return a value")
     else:
@@ -451,4 +427,4 @@ def main(api_base_url):
     
     
 if __name__ == "__main__":
-    main("http://localhost:5000")
+    main(sys.argv[1])
