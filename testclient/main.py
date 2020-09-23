@@ -51,12 +51,12 @@ def main(args=None):
     logging.info("API Home is {}".format(args.api_home))
     # END logging
 
+    results = []
     # START requirements tests
     if args.requirements or args.alltests:
         from tests.requirements_tests import main as req_main
 
-        req_main(args.api_home)
-
+        results.extend(req_main(args.api_home))
     # END requirements tests
 
     # # START abstract tests tests
@@ -96,10 +96,19 @@ def main(args=None):
     # for res in results:
     #     logging.info("{}: {}".format(res["id"], res["outcome"]))
 
+    for result in results:
+        if result[1] == "FAIL":
+            logging.info("Test for Requirement {}, {}.\nMessages:\n\t\t{}".format(
+                result[0],
+                result[1],
+                "\n\t\t".join(result[2])))
+        else:
+            logging.info("Test for Requirement {}, {}".format(result[0], result[1]))
+
 
 if __name__ == "__main__":
     import sys
 
     main(sys.argv[1:])
 
-    print("testing complete")
+    print("\n\ntesting complete")

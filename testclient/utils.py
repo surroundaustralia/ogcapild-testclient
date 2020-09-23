@@ -9,6 +9,7 @@ class MediaType(Enum):
     JSON = "application/json"
     GEOJSON = "application/geo+json"
     TURTLE = "text/turtle"
+    OAI3 = "application/vnd.oai.openapi+json;version=3.0"
 
 
 def get_http_status(url: str):
@@ -24,28 +25,35 @@ def get_http_status(url: str):
 
 def get_url_content(url: str, media_type: MediaType = None):
     if media_type is None:
-        media_type = MediaType.HTML
+        media_type = MediaType.JSON
     try:
-        with urlopen(Request(url, headers={"Accept": str(media_type.value)})) as response:
+        with urlopen(Request(url, headers={"Accept": str(media_type)})) as response:
             if response.code == 200:
-                if media_type == MediaType.JSON or media_type == MediaType.GEOJSON:
-                    return 200, json.loads(response.read())
+                if media_type == MediaType.JSON \
+                        or media_type == MediaType.GEOJSON \
+                        or media_type == MediaType.OAI3:
+                    return 200, json.loads(response.read()), response.headers
                 else:
-                    return 200, response.read().decode()
+                    return 200, response.read().decode(), response.headers
             else:
-                return response.code, None
-    except:
-        return response.code, None
+                return response.code, None, response.headers
+    except HTTPError as e:
+        return e.code, str(e), None
+    except URLError as e:
+        if hasattr(e, 'reason'):
+            return 500, e.reason, None
+        elif hasattr(e, 'code'):
+            return 500, e.code, None
 
 
 def is_url_ok(url: str, media_type: MediaType = None):
     if media_type is None:
         media_type = MediaType.HTML
     try:
-        with urlopen(Request(url, headers={"Accept": str(media_type.value)})) as response:
+        with urlopen(Request(url, headers={"Accept": str(media_type)})) as response:
             if response.code >= 200 and response.code <= 300:
                 return True
             else:
                 return False
-    except:
+    except Exception as e:
         return False
