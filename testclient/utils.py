@@ -4,7 +4,7 @@ from enum import Enum
 import json
 
 
-class SupportedMediaType(Enum):
+class MediaType(Enum):
     HTML = "text/html"
     JSON = "application/json"
     GEOJSON = "application/geo+json"
@@ -22,16 +22,30 @@ def get_http_status(url: str):
         return r.getcode()
 
 
-def get_content_by_accept(url: str, media_type: SupportedMediaType):
+def get_url_content(url: str, media_type: MediaType = None):
+    if media_type is None:
+        media_type = MediaType.HTML
     try:
-        with urlopen(Request(url, headers={"Accept": str(media_type)})) as response:
-            print(response.)
+        with urlopen(Request(url, headers={"Accept": str(media_type.value)})) as response:
             if response.code == 200:
-                if media_type == SupportedMediaType.JSON or media_type == SupportedMediaType.GEOJSON:
-                    return json.loads(response.read())
+                if media_type == MediaType.JSON or media_type == MediaType.GEOJSON:
+                    return 200, json.loads(response.read())
                 else:
-                    return response.read().decode()
+                    return 200, response.read().decode()
             else:
-                return None
+                return response.code, None
     except:
-        return None
+        return response.code, None
+
+
+def is_url_ok(url: str, media_type: MediaType = None):
+    if media_type is None:
+        media_type = MediaType.HTML
+    try:
+        with urlopen(Request(url, headers={"Accept": str(media_type.value)})) as response:
+            if response.code >= 200 and response.code <= 300:
+                return True
+            else:
+                return False
+    except:
+        return False

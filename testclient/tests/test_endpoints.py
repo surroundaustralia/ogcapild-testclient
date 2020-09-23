@@ -9,8 +9,7 @@ Minimal OGC API implementation must return for the following endpoints:
 /collections/{collection-id-1}/items                    first_collection_features
 /collections/{collection-id-1}/items/{feature-id-1}     first_collection_first_feature
 """
-from config import *
-
+from utils import start_logger
 
 ENDPOINTS = {
     "landing_page": None,

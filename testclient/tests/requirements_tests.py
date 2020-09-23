@@ -1,5 +1,6 @@
 import sys
-from utils import *
+sys.path.append("..")
+from testclient.utils import *
 
 
 def valid_link_object(link: dict):
@@ -51,7 +52,7 @@ def req_02_test(api_base_url: str):
     B = True
     messages = []
 
-    r = get_url_content(api_base_url, SupportedMediaType.JSON)
+    r = get_url_content(api_base_url, MediaType.JSON)
 
     if r[1] is not None and r[0] != 200:
         A = False
@@ -120,11 +121,11 @@ def req_03_test(api_base_url: str):
     result = True
     messages = []
 
-    r = get_url_content(api_base_url, SupportedMediaType.JSON)
+    r = get_url_content(api_base_url, MediaType.JSON)
     contents = r[1]
     links = contents.get("links")
     for link in links:
-        if not is_url_ok(link["href"], SupportedMediaType.JSON):
+        if not is_url_ok(link["href"], MediaType.JSON):
             result = False
             messages.append("Link {} did not return a valid response to a GET request".format(link["href"]))
 
@@ -136,7 +137,7 @@ def req_04_test(api_base_url):
     messages = []
     # get the service-desc URL
     # get the service-doc URL
-    r = get_url_content(api_base_url, SupportedMediaType.JSON)
+    r = get_url_content(api_base_url, MediaType.JSON)
 
     for link in r[1]["links"]:
         if link["rel"] == "service-desc":
@@ -370,9 +371,6 @@ def main(api_base_url):
                 r04 = req_04_test(api_base_url)
                 results.append(format_for_results(4, r04))
 
-    for result in results:
-        print(result)
-
     """
     req_02_test()
     req_03_test()
@@ -425,6 +423,11 @@ def main(api_base_url):
     req_50_test()
     """
     
-    
+    return results
+
+
 if __name__ == "__main__":
-    main(sys.argv[1])
+    results = main(sys.argv[1])
+
+    for result in results:
+        print(result)
