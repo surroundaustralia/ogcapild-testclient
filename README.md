@@ -83,7 +83,7 @@ Or the following RDF:
 ## Contacts
 
 *publisher:*  
-![](style/SURROUND-logo-100.png)  
+![](SURROUND-logo-100.png)  
 **SURROUND Australia Pty. Ltd.**  
 <https://surroundaustralia.com>  
 
