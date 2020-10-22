@@ -3,7 +3,7 @@ sys.path.append("..")
 from testclient.utils import *
 
 
-def valid_link_object(link: dict):
+def valid_link_object(link: dict) -> tuple:
     valid = True
     messages = []
     if link.get("href") is None:
@@ -146,10 +146,10 @@ class RequirementTests:
         for link in r[1]["links"]:
             if link["rel"] == "service-desc":
                 service_desc_uri = link["href"]
-                service_desc_type = link["type"]
+                service_desc_type = [x for x in MediaType if link["type"] == x.value][0]
             elif link["rel"] == "service-doc":
                 service_doc_uri = link["href"]
-                service_doc_type = link["type"]
+                service_doc_type = [x for x in MediaType if link["type"] == x.value][0]
 
         # call each
         if not is_url_ok(service_desc_uri, service_desc_type):
@@ -245,20 +245,38 @@ class RequirementTests:
         messages = []
         result = True
 
-        # get the first Collection
-        r = get_url_content(api_base_url + "/collections", media_type=MediaType.JSON)
-        first_collection_id = r[1].get("collections")[0].get("id")
-        r2 = get_url_content(api_base_url + "/collections/{}".format(first_collection_id), media_type=MediaType.JSON)
-        print(r2)
+        # "A": "The server SHALL respond with a response with the status code 400, if the request URI includes a
+        # query parameter that has an invalid value.",
 
         return result, messages
 
+    @staticmethod
+    def req_10_test(api_base_url: str):
+        result = False
+        messages = []
+        # get the GeoSPARQL RDF representation of a Feature, check for CRS
+        first_col_id = get_url_content(api_base_url + "/collections", MediaType.JSON)[1].get("collections")[0]["id"]
+        r = get_url_content(api_base_url + "/collections/" + first_col_id + "/items")
+        import pprint
+        pprint.pprint(r[1])
+        first_feature_id = r[1].get("collection")["features"][0]["id"]
+        feature_url = api_base_url + "collections/" + first_col_id + "/items/" + first_feature_id
+        param_string = "_profile=geosp"
+        r = get_url_content(feature_url + "?" + param_string, MediaType.NT)
+        for line in r[1].split(" ."):
+            if "<https://linked.data.gov.au/def/geox#inCRS>" in line:
+                result = True
+        if not result:
+            messages.append("")
+
+
+        # r = get_turtle(feature_url + "?" + param_string)
+        # print(r)
+
+
+        return result, messages
 
 """
-def req_10_test():
-    pass
-
-
 def req_11_test():
     pass
 
@@ -435,9 +453,11 @@ def main(api_base_url):
             if not r[0]:
                 return rs
 
+    # r = RequirementTests.req_10_test(api_base_url)
+    # rs.append(format_for_results(10, r))
     return rs
 
 
 if __name__ == "__main__":
-    for res in main(sys.argv[1]):
+    for res in main("http://localhost:5000"):  # sys.argv[1]
         print(res)

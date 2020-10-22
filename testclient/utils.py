@@ -10,6 +10,7 @@ class MediaType(Enum):
     GEOJSON = "application/geo+json"
     TURTLE = "text/turtle"
     OAI3 = "application/vnd.oai.openapi+json;version=3.0"
+    NT = "application/n-triples"
 
 
 def get_http_status(url: str):
@@ -26,13 +27,18 @@ def get_http_status(url: str):
 def get_url_content(url: str, media_type: MediaType = None):
     if media_type is None:
         media_type = MediaType.JSON
+
     try:
-        with urlopen(Request(url, headers={"Accept": str(media_type)})) as response:
+        with urlopen(Request(url, headers={"Accept": media_type.value})) as response:
             if response.code == 200:
                 if media_type == MediaType.JSON \
                         or media_type == MediaType.GEOJSON \
                         or media_type == MediaType.OAI3:
-                    return 200, json.loads(response.read()), response.headers
+                    x = response.read().decode()
+                    try:
+                        return 200, json.loads(x), response.headers
+                    except:
+                        return 500, "", response.headers
                 else:
                     return 200, response.read().decode(), response.headers
             else:
