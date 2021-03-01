@@ -190,7 +190,7 @@ class RequirementTests:
         B = True
         messages = []
 
-        r = get_url_content(api_base_url + "/conformance", MediaType.OAI3)  # could also have been MediaType.JSON
+        r = get_url_content(api_base_url + "/conformance", MediaType.JSON)  # could also have been MediaType.JSON
         if r[1] is not None and r[0] != 200:
             result = False
             A = False
@@ -251,11 +251,18 @@ class RequirementTests:
         return result, messages
 
     @staticmethod
+    # TODO: Fix problem with collections which cannot access any item in the response. No response
     def req_10_test(api_base_url: str):
         result = False
         messages = []
         # get the GeoSPARQL RDF representation of a Feature, check for CRS
-        first_col_id = get_url_content(api_base_url + "/collections", MediaType.JSON)[1].get("collections")[0]["id"]
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Status code for {}. It seems that it cannot list the items in /collections".format(api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        first_col_id = r[1].get("collections")[0]["id"]
         r = get_url_content(api_base_url + "/collections/" + first_col_id + "/items")
         import pprint
         pprint.pprint(r[1])
@@ -269,50 +276,195 @@ class RequirementTests:
         if not result:
             messages.append("")
 
-
         # r = get_turtle(feature_url + "?" + param_string)
         # print(r)
-
-
         return result, messages
 
+    @staticmethod
+    def req_11_test(api_base_url: str):
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections")
+        if r[0] != 200:
+            messages.append("Response code was incorrect for {}. It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
+            result = False
+            return result, messages
+        result = True
+        messages.append("")
+        return result, messages
+
+    @staticmethod
+    def req_12_test(api_base_url: str):
+        result = True
+        A = True
+        B = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)  # could also have been MediaType.JSON
+        if r[1] is not None and r[0] != 200:
+            result = False
+            A = False
+            messages.append(
+                "Content was returned for the Collections endpoint, {}, but the response code was incorrect. "
+                "It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
+
+        # TODO: Compare yaml schema with result - PART B
+        # conforms_to = r[1].get("conformsTo")
+        # if conforms_to is None:
+        #     result = False
+        #     B = False
+        #     messages.append("The conformsTo property is not present")
+        # elif type(conforms_to) != list:
+        #     result = False
+        #     B = False
+        #     messages.append("The conformsTo property is present but is not of type list (Array) "
+        #                     "but instead of type {}".format(type(conforms_to)))
+
+        if not A:
+            messages.insert(0, "Part A failed")
+        if not B:
+            messages.insert(0, "Part B failed")
+        return result, messages
+
+    @staticmethod
+    def req_13_test(api_base_url: str):
+        messages = ["Not implemented - Fixed error with /collections endpoint"]
+        result = False
+        return result, messages
+
+    @staticmethod
+    def req_14_test(api_base_url: str):
+        messages = ["Not implemented - Fixed error with /collections endpoint"]
+        result = False
+        return result, messages
+
+    @staticmethod
+    def req_15_test(api_base_url: str):
+        messages = ["Not implemented - Fixed error with /collections endpoint"]
+        result = False
+        return result, messages
+
+    @staticmethod
+    def req_16_test(api_base_url: str):
+        messages = ["Not implemented - Fixed error with /collections endpoint"]
+        result = False
+        return result, messages
+
+    @staticmethod
+    def req_17_test(api_base_url: str):
+        messages = []
+
+        # TODO: When collections endpoint is properly working. Send get request to receive all collections id.
+        collectionId = ["agp"]
+
+        for c in collectionId:
+            A = True
+            B = True
+            result = True
+            r = get_url_content(api_base_url + "/collections/{}".format(c), MediaType.JSON)  # could also have been MediaType.JSON
+            if r[1] is not None and r[0] != 200:
+                result = False
+                A = False
+                messages.append(
+                    "Content was returned for the Collections endpoint, {}, but the response code was incorrect. "
+                    "It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
+
+            if 'id' in r[1].get('collection'):
+                if r[1].get('collection')['id'] == c:
+                    result = True
+                    B = True
+                else:
+                    result = False
+                    B = False
+                    messages.append("collection.id is not equal to collectionId {}".format(collectionId))
+            else:
+                result = False
+                B = False
+                messages.append("id property not found in .collections[*]")
+            if not A:
+                messages.insert(0, "Part A failed")
+            if not B:
+                messages.insert(0, "Part B failed")
+            if not result:
+                return result, messages
+
+    @staticmethod
+    def req_18_test(api_base_url: str):
+        A = True
+        B = True
+        result = True
+        messages = []
+
+        r = get_url_content(api_base_url, MediaType.JSON)
+        if r[1] is not None and r[0] != 200:
+            result = False
+            A = False
+            messages.append(
+                "Content was returned for the Collections endpoint, {}, but the response code was incorrect. "
+                "It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
+
+        # TODO: Compare yaml schema with result - PART B
+        B = False
+        # conforms_to = r[1].get("conformsTo")
+        # if conforms_to is None:
+        #     result = False
+        #     B = False
+        #     messages.append("The conformsTo property is not present")
+        # elif type(conforms_to) != list:
+        #     result = False
+        #     B = False
+        #     messages.append("The conformsTo property is present but is not of type list (Array) "
+        #                     "but instead of type {}".format(type(conforms_to)))
+        if not A:
+            messages.insert(0, "Part A failed")
+        if not B:
+            messages.insert(0, "Part B failed")
+        return result, messages
+
+    @staticmethod
+    def req_19_test(api_base_url: str):
+        result = True
+        A = True
+        B = True
+        messages = []
+
+        # TODO: When collections endpoint is properly working. Send get request to receive all collections id.
+        collectionId = ["agp"]
+
+        for c in collectionId:
+            A = True
+            B = True
+            result = True
+            r = get_url_content(api_base_url + "/collections/{}".format(c),
+                                MediaType.JSON)  # could also have been MediaType.JSON
+            if r[1] is not None and r[0] != 200:
+                result = False
+                A = False
+                messages.append(
+                    "Content was returned for the Collections endpoint, {}, but the response code was incorrect. "
+                    "It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
+
+            if 'id' in r[1].get('collection'):
+                if r[1].get('collection')['id'] == c:
+                    result = True
+                    B = True
+                else:
+                    result = False
+                    B = False
+                    messages.append("collection.id is not equal to collectionId {}".format(collectionId))
+            else:
+                result = False
+                B = False
+                messages.append("id property not found in .collections[*]")
+            if not A:
+                messages.insert(0, "Part A failed")
+            if not B:
+                messages.insert(0, "Part B failed")
+            if not result:
+                return result, messages
+
+
 """
-def req_11_test():
-    pass
-
-
-def req_12_test():
-    pass
-
-
-def req_13_test():
-    pass
-
-
-def req_14_test():
-    pass
-
-
-def req_15_test():
-    pass
-
-
-def req_16_test():
-    pass
-
-
-def req_17_test():
-    pass
-
-
-def req_18_test():
-    pass
-
-
-def req_19_test():
-    pass
-
-
 def req_20_test():
     pass
 
@@ -445,19 +597,14 @@ def format_for_results(requirement_no, r):
 def main(api_base_url):
     rs = []
     method_no = 0
-    for req_method in dir(RequirementTests):
-        if req_method.startswith("req_"):
-            method_no += 1
-            r = getattr(RequirementTests, req_method)(api_base_url)
-            rs.append(format_for_results(method_no, r))
-            if not r[0]:
-                return rs
-
-    # r = RequirementTests.req_10_test(api_base_url)
-    # rs.append(format_for_results(10, r))
+    tests_list = [method for method in dir(RequirementTests) if method.startswith('__') is False]
+    for test in tests_list:
+        method_no += 1
+        r = getattr(RequirementTests, test)(api_base_url)
+        rs.append(format_for_results(method_no, r))
     return rs
 
 
 if __name__ == "__main__":
-    for res in main("http://localhost:5000"):  # sys.argv[1]
+    for res in main("http://provinces.surroundaustralia.com/"):  # sys.argv[1]
         print(res)
