@@ -352,14 +352,19 @@ class RequirementTests:
             A = False
             messages.append("Empty collections")
 
-        for collection in r[1]['collections']:
-            if 'links' not in collection:
-                A = False
-                messages.append("Collection {} does not include links property".format(collection))
+        try:
+            for collection in r[1]['collections']:
+                if 'links' not in collection:
+                    A = False
+                    messages.append("Collection {} does not include links property".format(collection))
 
-            if 'rel' not in collection['links'] or 'type' not in collection['links']:
-                B = False
-                messages.append('Link {} does not include rel or type properties.'.format(collection['links']))
+                if 'rel' not in collection['links'] or 'type' not in collection['links']:
+                    B = False
+                    messages.append('Link {} does not include rel or type properties.'.format(collection['links']))
+        except Exception as e:
+            result = False
+            messages.insert(0, "Part B failed")
+            return result, messages
 
         if A and B:
             result = True
@@ -405,9 +410,6 @@ class RequirementTests:
         # TODO: Finish collections id - PART B
         messages = []
 
-        # TODO: When collections endpoint is properly working. Send get request to receive all collections id.
-        api_base_url = "http://provinces.surroundaustralia.com/"
-
         r = get_url_content(api_base_url + "/collections", MediaType.JSON)
         if r[0] != 200:
             messages.append("Error {}. It seems that it cannot list the items in /collections".format(
@@ -419,27 +421,31 @@ class RequirementTests:
             result = False
             messages.append("Empty collections")
             return result, messages
-
-        for collection in r[1]['collections']:
-            r = is_url_ok(
-                api_base_url + "/collections/{}".format(collection['id']))  # could also have been MediaType.JSON
-            if r[1] is not None and r[0] != 200:
-                result = False
-                messages.append(
-                    "Content was returned for the Collections endpoint, {}, but the response code was incorrect. "
-                    "It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
-                return result, messages
+        try:
+            for collection in r[1]['collections']:
+                r = get_url_content(
+                    api_base_url + "/collections/{}".format(collection['id']))  # could also have been MediaType.JSON
+                if r[1] is not None and r[0] != 200:
+                    result = False
+                    messages.append(
+                        "Content was returned for the Collections endpoint, {}, but the response code was incorrect. "
+                        "It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
+                    return result, messages
+                if r[1]['collection']['identifier'] == collection['id']:
+                    result = True
+                    return result, messages
+                else:
+                    result = False
+                    messages.append(f"Collection {collection} does not contain same id")
+                    return result, messages
+        except Exception as e:
+            result = False
+            messages.append(f"Error: {e}")
+            return result, messages
 
     @staticmethod
     def req_18_test(api_base_url: str):
-        # TODO: Finish collections id - PART B
-        A = True
-        B = True
-        result = True
         messages = []
-
-        # TODO: When collections endpoint is properly working. Send get request to receive all collections id.
-        api_base_url = "http://provinces.surroundaustralia.com/"
 
         r = get_url_content(api_base_url + "/collections", MediaType.JSON)
         if r[0] != 200:
@@ -453,18 +459,35 @@ class RequirementTests:
             messages.append("Empty collections")
             return result, messages
 
-        return result, messages
+        try:
+            for collection in r[1]['collections']:
+                r = get_url_content(
+                    api_base_url + "/collections/{}".format(collection['id']))  # could also have been MediaType.JSON
+                if r[1] is not None and r[0] != 200:
+                    result = False
+                    messages.append(
+                        "Content was returned for the Collections endpoint, {}, but the response code was incorrect. "
+                        "It was {}, should have been 200".format(api_base_url + "/collections", r[0]))
+                    return result, messages
+                if r[1]['collection']['identifier'] == collection['id'] and \
+                    r[1]['collection']['title'] == collection['title'] and \
+                    r[1]['collection']['description'] == collection['description'] and \
+                    r[1]['collection']['extent_temporal'] == collection['extent_temporal'] and \
+                    r[1]['collection']['extent_spatial'] == collection['extent_spatial']:
+                    result = True
+                    return result, messages
+                else:
+                    result = False
+                    messages.append(f"Collection {collection} does not contain same id, title, description or extent properties")
+                    return result, messages
+        except Exception as e:
+            result = False
+            messages.append(f"Error: {e}")
+            return result, messages
 
     @staticmethod
     def req_19_test(api_base_url: str):
-        # TODO: Finish collections id - PART B
-        result = True
-        A = True
-        B = True
         messages = []
-
-        # TODO: When collections endpoint is properly working. Send get request to receive all collections id.
-        api_base_url = "http://provinces.surroundaustralia.com/"
 
         r = get_url_content(api_base_url + "/collections", MediaType.JSON)
         if r[0] != 200:
@@ -478,30 +501,103 @@ class RequirementTests:
             messages.append("Empty collections")
             return result, messages
 
-        for collection in r[1]['collections']:
-            r = get_url_content(api_base_url + "/collections/{}/items".format(collection['id']), MediaType.JSON)
-            if r[0] != 200:
-                messages.append("Error {}. It seems that it cannot list the items in /collections".format(
-                    api_base_url + "/collections"))
-                result = False
-                return result, messages
+        try:
+            for collection in r[1]['collections']:
+                r = get_url_content(api_base_url + "/collections/{}/items".format(collection['id']), MediaType.JSON)
+                if r[0] != 200:
+                    messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                        api_base_url + "/collections"))
+                    result = False
+                    return result, messages
+                if r[1]['collection']['identifier'] != collection['id']:
+                    result = False
+                    messages.append(f"Collection {collection} does not contain same id")
+                    return result, messages
+            result = True
+            return result, messages
+        except Exception as e:
+            result = False
+            return  result, messages
 
     @staticmethod
     def req_20_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        result = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        id_collection = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items?limit=2".format(id_collection), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
         return result, messages
 
     @staticmethod
     def req_21_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        A = True
+        B = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        limit=2
+        id_collection = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items?limit={}".format(id_collection,
+                                                                                   limit), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        if len(r[1]['items']) != limit:
+            A = False
+
+        if A and B:
+            result = True
+            return result, messages
+        else:
+            result = False
+            if not A:
+                messages.insert(0, "Part A failed")
+            if not B:
+                messages.insert(0, "Part B failed")
         return result, messages
 
     @staticmethod
     def req_22_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        result = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        bbox = "P6730353"
+        id_collection = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items?bbox={}".format(id_collection,
+                                                                                   bbox), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
         return result, messages
 
     @staticmethod
@@ -512,8 +608,25 @@ class RequirementTests:
 
     @staticmethod
     def req_24_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        result = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        datetime = "2019-09-07"
+        id_collection = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items?datetime={}".format(id_collection,
+                                                                                   datetime), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}.".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
         return result, messages
 
     @staticmethod
@@ -524,20 +637,94 @@ class RequirementTests:
 
     @staticmethod
     def req_26_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        A = True
+        B = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        bbox = "P6730353"
+        limit=2
+        id_collection = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items?bbox={}&limit={}".format(id_collection,
+                                                                                   bbox, limit), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}.".format(
+                api_base_url + "/collections"))
+            A = False
+
+        if len(r[1]['items']) != limit:
+            B = False
+
+        if A and B:
+            result = True
+            return result, messages
+        else:
+            result = False
+            if not A:
+                messages.insert(0, "Part A failed")
+            if not B:
+                messages.insert(0, "Part B failed")
         return result, messages
+
 
     @staticmethod
     def req_27_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        result = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        bbox = "P6730353"
+        limit=2
+        id_collection = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items?bbox={}&limit={}".format(id_collection,
+                                                                                   bbox, limit), MediaType.JSON)
+
+        if r[1]['links'][0]['rel'] != 'self':
+            messages.append("Link self or alternate do not found in {}".format(r[1]))
+            return False, messages
+
+        r = get_url_content(api_base_url + "/collections/{}/items?_profile=alt".format(id_collection), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. No alternate parameter ".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
         return result, messages
 
     @staticmethod
     def req_28_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        result = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            result = False
+            return result, messages
+
+        bbox = "P6730353"
+        limit = 2
+        id_collection = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items?bbox={}&limit={}".format(id_collection,
+                                                                                           bbox, limit), MediaType.JSON)
+
+        for el in r[1]['links']:
+            if 'rel' not in el or 'type' not in el:
+                result = False
+                messages.append('Rel and type link parameters not found')
         return result, messages
 
     @staticmethod
@@ -560,40 +747,87 @@ class RequirementTests:
 
     @staticmethod
     def req_32_test(api_base_url: str):
-        # TODO: Finish collections id - PART B
-        result = False
+        A = True
+        B = True
         messages = []
-
-        # TODO: When collections endpoint is properly working. Send get request to receive all collections id.
-        api_base_url = "http://provinces.surroundaustralia.com/"
 
         r = get_url_content(api_base_url + "/collections", MediaType.JSON)
         if r[0] != 200:
             messages.append("Error {}. It seems that it cannot list the items in /collections".format(
                 api_base_url + "/collections"))
-            result = False
-            return result, messages
+            A = False
 
         if not r[1]['collections']:
             result = False
             messages.append("Empty collections")
             return result, messages
 
+        collection_id = r[1]['collections'][0]['id']
+        r_items = get_url_content(api_base_url + "/collections/{}/items".format(collection_id), MediaType.JSON)
+        if r_items[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            A = False
+
+        for item in r_items[1]['items']:
+            r_items = get_url_content(api_base_url + "/collections/{}/items/{}".format(collection_id,
+                                                                                 item[0].split('/')[-1]), MediaType.JSON)
+            if r_items[0] != 200:
+                messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                    api_base_url + "/collections"))
+                A = False
+
         for collection in r[1]['collections']:
-            r = get_url_content(api_base_url + "/collections/{}".format(collection['identifier']), MediaType.JSON)
+            r = get_url_content(api_base_url + "/collections/{}/items".format(collection['id']), MediaType.JSON)
             if r[0] != 200:
                 messages.append("Error {}. It seems that it cannot list the items in /collections".format(
                     api_base_url + "/collections"))
-                result = False
-                return result, messages
+                B = False
+            if r[1]['collection']['identifier'] != collection['id']:
+                B = False
+                messages.append(f"Collection {collection} does not contain same id")
 
-        # TODO: It seems that I cannot obtain the items programatically from: http://provinces.surroundaustralia.com/collections/agp/items
+        if A and B:
+            result = True
+            return result, messages
+        else:
+            result = False
+            if not A:
+                messages.insert(0, "Part A failed")
+            if not B:
+                messages.insert(0, "Part B failed")
         return result, messages
 
     @staticmethod
     def req_33_test(api_base_url: str):
-        result = False
-        messages = ["Not implemented"]
+        result = True
+        messages = []
+
+        r = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            return False, messages
+
+        if not r[1]['collections']:
+            result = False
+            messages.append("Empty collections")
+            return result, messages
+
+        collection_id = r[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items".format(collection_id), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            return False, messages
+
+        for item in r[1]['items']:
+            r = get_url_content(api_base_url + "/collections/{}/items/{}".format(collection_id,
+                                                                                 item[0].split('/')[-1]), MediaType.JSON)
+            if r[0] != 200:
+                messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                    api_base_url + "/collections"))
+                return False, messages
         return result, messages
 
     @staticmethod
@@ -637,45 +871,40 @@ class RequirementTests:
 
     @staticmethod
     def req_37_test(api_base_url: str):
+        result = True
         messages = []
 
-        r = get_url_content(api_base_url, MediaType.JSON)
+        r_main = get_url_content(api_base_url + "/collections", MediaType.JSON)
+        if r_main[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            return False, messages
 
-        if r[1] is not None and r[0] != 200:
+        if not r_main[1]['collections']:
             result = False
-            messages.append(
-                "Status code for {} with MediaType.HTML. It seems that it cannot list the items in /collections".format(
-                    api_base_url))
+            messages.append("Empty collections")
             return result, messages
 
-        r = get_url_content(api_base_url + 'collections/agp/items/PR20119', MediaType.GEOJSON)
-        if r[1] is not None and r[0] != 200:
-            result = False
-            messages.append(
-                "Status code for {} with MediaType.GEOJSON. It seems that it cannot list the items in /collections".format(
-                    api_base_url))
-            return result, messages
+        collection_id = r_main[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items".format(collection_id), MediaType.JSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            return False, messages
+
+        collection_id = r_main[1]['collections'][0]['id']
+        r = get_url_content(api_base_url + "/collections/{}/items".format(collection_id), MediaType.GEOJSON)
+        if r[0] != 200:
+            messages.append("Error {}. It seems that it cannot list the items in /collections".format(
+                api_base_url + "/collections"))
+            return False, messages
+        return result, messages
 
     @staticmethod
     def req_38_test(api_base_url: str):
-        messages = []
-
-        r = get_url_content(api_base_url, MediaType.JSON)
-
-        if r[1] is not None and r[0] != 200:
-            result = False
-            messages.append(
-                "Status code for {} with MediaType.HTML. It seems that it cannot list the items in /collections".format(
-                    api_base_url))
-            return result, messages
-
-        r = get_url_content(api_base_url + 'collections/agp/items/PR20119', MediaType.GEOJSON)
-        if r[1] is not None and r[0] != 200:
-            result = False
-            messages.append(
-                "Status code for {} with MediaType.HTML. It seems that it cannot list the items in /collections".format(
-                    api_base_url))
-            return result, messages
+        result = False
+        messages = ["Not implemented"]
+        return result, messages
 
     @staticmethod
     def req_39_test(api_base_url: str):
@@ -771,4 +1000,4 @@ def main(api_base_url):
 
 if __name__ == "__main__":
     # for res in main("http://provinces.surroundaustralia.com/"):  # sys.argv[1]
-    main("http://asgs.surroundaustralia.com")
+    main("http://geofabric.surroundaustralia.com/")
